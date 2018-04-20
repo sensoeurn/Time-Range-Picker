@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Test</title>
+	<style>
+/* =====================SD========================== */
+ .separator {display:none}
+.sd_player{margin-top: 5px;width:100%;height:100%;overflow:hidden;font-family:Arial,sans-serif;font-size:12px;background-color:#000;}.sd_player *{margin:0;padding:0}.sd_player a{text-decoration:none}.sd_player li{list-style:none}.sd_video{width:100%;background-color:#000;position:relative;overflow:hidden}.sd_loading{
+position: absolute;
+text-align:center;
+bottom: 41.5%;
+right: 44%;
+color: orange;
+font-size:500%;
+z-index: 9999;
+display: none;
+background-color: #;
+padding: 5px;
+}.sd_video iframe{width:100%;height:100%;position:absolute;top:0;left:0;display:none;background-color:#000}.sd_server{width:100%;height:100%;position:absolute;top:0;left:0;display:none}.sd_server video{width:100%;height:100%;background-color:#000}.sd_list{width:100%;overflow:auto;border-top:1px solid #333}.sd_list li{clear:both;border-left:5px solid #444;border-bottom:1px solid #333;overflow:hidden;cursor:pointer}.sd_list .selected{ border-left: 4px solid #04A3A9;background-color: #222222;border-right: 2px solid #04A3A9;}.sd_list img{float:left;width:50px;height:45px}.sd_list div{text-indent:10px;color:#fff}.sd_list div h2{width:100%;font-size:120%;text-align:left;margin-top:4px;font-weight:400;color:#fff}.sd_list div p{width:100%;color:#777;font-size:100%}.sd_control{width:100%;height:25px;line-height:25px;background-color:#444;text-align:center}.sd_btn{height:23px;line-height:20px;padding:5px 8px;background-color:#04A3A9;cursor:pointer;-webkit-border-radius:2px;-moz-border-radius:2px;border-radius:2px;margin-left:2px;margin-right:2px;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;-o-user-select:none;user-select:none;text-transform:uppercase}.sd_control .active{background-color:#000}.sd_desktop .sd_video{float:left;height:100%}.sd_desktop .sd_videos{float:left;height:100%}.sd_desktop .sd_btn span{display:none}.sd_desktop .sd_list{border-top:0}.sd_desktop .sd_btn{padding:2px 10px;margin-left:5px;margin-right:5px}.sd_player .fa{margin-left:0}.tab,#tab{display:none}
+.sd_player i.fa.fa-cloud-upload {color: #04A3A9;}
+.sd_player i.fa.fa-mixcloud {color: #A6FF1D}
+.sd_player i.fa.fa-youtube{color:#DA5E4C}
+.sd_player i.fa.fa-vimeo-square{color:#25B1E2}
+.sd_player i.fa.fa-video-camera{color:#04A3A9}
+.sd_player i.fa.fa-facebook-official {color: #04A3A9;}
+
+
+</style>
+<script>
+var options = {
+'player_container':'#player',
+'player_ratio':'16:9',
+'player_mobile_on_width':'600',
+'player_desktop_video_width':'70%',
+'automatic_response':false};
+</script>
+<script type='text/javascript'>
+
+//<![CDATA[
+
+function Video_player(opt){;
+
+/* check jquery library */
+if(typeof $ == "undefined"){
+	alert("Please insert jQuery library!");
+	return;
+}
+
+/* variables */
+if(typeof opt.player_list == "undefined"){
+	return;
+}
+
+var files = [];
+var titles = [];
+var descriptions = [];
+var images = [];
+var html_ = "";
+var video_count = 0;
+var scroll_step = 0;
+var list_item;
+var list_item_desktop = 7;
+var list_item_mobile = 4;
+var item_height = 50;
+var player = $(opt.player_container);
+var width_ = player.width();
+var ratio = opt.player_ratio.split(':');
+ratio = ratio[1]/ratio[0];
+var autocontinue;
+
+/* read options */
+for(var i=0; i<opt.player_list.length; i++){
+	files.push(opt.player_list[i].file);
+	titles.push(opt.player_list[i].title);
+	descriptions.push(opt.player_list[i].description);
+	images.push(opt.player_list[i].image);	
+}
+
+/* create html */
+html_ += '<div class="sd_player">';
+html_ += '<div class="sd_video"><span class="sd_loading" ><i class="fa fa-pulse fa-connectdevelop fa-fw"/></span>';
+html_ += '<iframe id="video_player" src="" frameborder="0" allowfullscreen webkitallowfullscreen mozallowfullscreen></iframe>';
+html_ += '<div class="sd_server"></div>';
+html_ += '</div>';
+html_ += '<div class="sd_videos">';
+html_ += '<ul class="sd_list"></ul>';
+html_ += '<div class="sd_control">';
+html_ += '<span class="sd_prevPage sd_btn"><i class="fa fa-chevron-left"></i><i class="fa fa-chevron-left"></i><span> prevPage</span></span>';
+html_ += '<span class="sd_prev sd_btn"><i class="fa fa-chevron-left"></i><span> prev</span></span>';
+html_ += '<span class="sd_next sd_btn"><span>next </span><i class="fa fa-chevron-right"></i></span>';
+html_ += '<span class="sd_nextPage sd_btn"><span>nextPage </span><i class="fa fa-chevron-right"></i><i class="fa fa-chevron-right"></i></span>';
+html_ += '</div>';
+html_ += '</div>';
+html_ += '</div>';
+player.html(html_);
+
+/* is youtube */
+function is_youtube(video_link){
+	if(video_link.indexOf('watch?v')>-1){
+		return video_link.substring(video_link.indexOf("?v=")+3);
+	}else if(video_link.indexOf('youtube')>-1 || video_link.indexOf('youtu.be')>-1){
+		return video_link.substring(video_link.lastIndexOf("/")+1);
+	}
+	return false;
+}
+
+/* create list */
+html_ = '';
+for(var i=0; i<titles.length; i++){
+	html_ += '<li>';
+	html_ += '<img style="width: 80px !important; height: 50px !important; " src="';
+	if(is_youtube(files[i])){
+		html_ += 'http://i3.ytimg.com/vi/'+ is_youtube(files[i])+'/hqdefault.jpg';
+	}else if(files[i].indexOf("vimeo")>-1){
+		html_ += 'http://1.bp.blogspot.com/-ziC0CBcYtxA/VTs7vMQUWUI/AAAAAAAAASU/dTbpYizqbtI/s1600/pk-fa.png';
+
+}else if(files[i].indexOf("vid")>-1){
+		html_ += 'http://1.bp.blogspot.com/-ziC0CBcYtxA/VTs7vMQUWUI/AAAAAAAAASU/dTbpYizqbtI/s1600/pk-fa.png';
+
+	}else if(files[i].indexOf("google")>-1){
+		html_ += 'http://1.bp.blogspot.com/-ziC0CBcYtxA/VTs7vMQUWUI/AAAAAAAAASU/dTbpYizqbtI/s1600/pk-fa.png';			
+	}else{
+		html_ += images[i];
+	}
+	html_ += '" />';
+	html_ += '<div>';
+	html_ += '<h2 style="text-align:left;">';
+	html_ += '<i class="fa ';
+	if(is_youtube(files[i])){
+	html_ += 'fa-youtube';
+	}else if(files[i].indexOf("vimeo")>-1){
+	html_ += 'fa-vimeo-square';
+	}else if(files[i].indexOf("google")>-1){
+	html_ += 'fa-cloud-upload';
+	}else if(files[i].indexOf("sd")>-1){
+	html_ += 'fa-server';
+	}
+	else if(files[i].indexOf("vid")>-1){
+	html_ += 'fa-facebook-square';
+	}
+     else{
+		html_ += 'fa-file';
+	}
+	html_ += '';
+	html_ += '"></i> ';
+	html_ += titles[i]+'</h2>';
+	html_ += '<p>  www.lykomryonline.com  </p>';
+	html_ += '</div>';
+	html_ += '</li>';
+	}
+player.find('.sd_list').html(html_);
+
+for(var i=0; i<titles.length; i++){
+	if(files[i].indexOf("vimeo")>-1){
+		$.ajax({
+			type:'GET',
+			url: 'http://vimeo.com/api/v2/video/' + files[i].substring(files[i].lastIndexOf("/")+1) + '.json',
+			jsonp: 'callback',
+			dataType: 'jsonp',
+			indexValue: i,
+			success: function(data){;	
+				var thumbnail_src = data[0].thumbnail_large;
+				player.find('.sd_list').find('li').eq(this.indexValue).find('img').attr('src',thumbnail_src);
+			}
+		});
+		//console.log('http://vimeo.com/api/v2/video/' + files[i].substring(files[i].lastIndexOf("/")+1) + '.json')		
+	}
+}	
+
+//vimeo detect when video is end
+$.getScript('http://f.vimeocdn.com/js/froogaloop2.min.js'); 
+
+//youtube detect when video is end
+$.getScript('http://www.youtube.com/iframe_api');
+
+var youtube_end_load = false;
+function youtube_end(){	
+	youtube_end_load = true;
+	new YT.Player('video_player', {
+            events: {
+                'onStateChange': function onPlayerStateChange(event) {
+					switch(event.data) {
+						case YT.PlayerState.ENDED:
+							autocontinue = true;
+							autocontinue_next();
+							//console.log('Youtube is ended.');
+						break;
+					}					
+				}
+           }
+    });
+}
+window.onYouTubeIframeAPIReady = function () {
+	youtube_end();
+}
+
+
+/* load video */
+function load_video(video){;
+	var video_url = video;
+	player.find('.sd_server').find('video').remove();
+	player.find('.sd_server').hide();
+	player.find('iframe').attr('src','').hide();	
+	player.find('.sd_loading').show();
+	
+	if(is_youtube(video)){
+		/* youtube */	
+		video_url = "http://www.youtube.com/embed/"+is_youtube(video)+"?autoplay=0&loop=1&showinfo=0&rel=0&enablejsapi=1";
+		if(autocontinue){			
+			video_url = "http://www.youtube.com/embed/"+is_youtube(video)+"?autoplay=1&loop=1&showinfo=0&rel=0&enablejsapi=1";
+		}
+		player.find('iframe').attr('src',video_url).show();	
+		
+		if(youtube_end_load){
+			youtube_end();
+		}
+		
+	}else if(video.indexOf("vimeo")>-1){
+		/* vimeo */		
+		video_url = "https://player.vimeo.com/video/"+video.substring(video.lastIndexOf('/')+1);
+		if(autocontinue){
+			player.find('iframe').attr('src',video_url+"?api=1&amp;player_id=video_player&amp;autoplay=1").show();
+		}else{
+			player.find('iframe').attr('src',video_url+"?api=1&amp;player_id=video_player").show();
+		}
+		if(typeof (player.find('iframe')[0]).addEvent != "undefined"){
+			(player.find('iframe')[0]).addEvent('ready', function(player_id) {
+				(player.find('iframe')[0]).addEvent('finish', function(){
+					autocontinue = true;
+					autocontinue_next();
+					//console.log("Vimeo is ended");
+				});
+			});
+		}
+		
+	}else if(video.indexOf("google")>-1){		
+		/* google */	
+		player.find('iframe').attr('src',video_url).show();	
+	}
+     else if(video.indexOf("vid")>-1){		
+		/* vid */	
+		player.find('iframe').attr('src',video_url).show();	
+	}
+    else{
+		/* server */
+		html_ = '';
+		if(autocontinue){
+			html_ += '<video width="100%" height="100%" controls autoplay>';
+		}else{
+			html_ += '<video width="100%" height="100%" controls>';
+		}
+		html_ += '<source src="'+video_url.replace('.ogg','.mp4')+'" type="video/mp4">';
+		html_ += '<source src="'+video_url.replace('.mp4','.ogg')+'" type="video/ogg">';
+		html_ += '</video>';
+		player.find('.sd_server').show().html(html_);
+		player.find("video").bind("ended", function(){
+			autocontinue = true;
+			autocontinue_next();
+			//console.log("Server is ended");
+		});
+
+	}
+	player.find('iframe').load(function(){
+		player.find('.sd_loading').hide();
+	});
+}
+
+/* change video */
+player.find('.sd_list').click(function(){
+	autocontinue = true;
+});
+player.find('.sd_list').find('li').outerHeight(item_height);
+player.find('.sd_list').find('li').each(function(num){
+	$(this).click(function(){		
+		video_count = num;
+		if(player.find('.sd_list').find('li').eq(num).hasClass('selected')){return;};
+		player.find('.sd_list').find('li').removeClass('selected').eq(num).addClass('selected');
+		player.find('li').find('div').find('h2').removeClass('sele').eq(num).addClass('sele');
+		load_video(files[num]);	
+		select();
+	});
+});
+
+
+/* select video */
+function select(){
+	if(video_count>0){
+		player.find('.sd_prev').addClass('active');
+	}else{
+		player.find('.sd_prev').removeClass('active');
+	}
+	if(video_count<files.length-1){
+		player.find('.sd_next').addClass('active');
+	}else{
+		player.find('.sd_next').removeClass('active');
+	}
+}
+select();
+
+/* size */
+function size(){
+	if($(window).width()<opt.player_mobile_on_width || !opt.automatic_response){	
+		list_item = list_item_mobile;
+		if(opt.automatic_response){
+			player.width($(window).width());
+		}
+		player.removeClass('sd_desktop');
+		player.find('.sd_list').height(list_item*(item_height));
+		player.find('.sd_video').height(player.find('.sd_video').width()*ratio);
+		player.find('.sd_video').width('100%');	
+		player.find('.sd_videos').width('100%');	
+	}else{
+		list_item = list_item_desktop;
+		player.addClass('sd_desktop');
+		player.width(width_);
+		player.find('.sd_list').height(list_item*(item_height-0.8));
+		player.find('.sd_video').height(player.find('.sd_videos').outerHeight());
+		player.find('.sd_video').css('width',opt.player_desktop_video_width);	
+		player.find('.sd_videos').css('width',100-parseInt(opt.player_desktop_video_width)+'%');
+	}	
+}
+$(window).resize(function(){
+	size();
+});	
+size();
+
+/* scroll */
+function scroll(t){
+	if(t.scrollTop()>0){
+		player.find('.sd_prevPage').addClass('active');
+	}else{
+		player.find('.sd_prevPage').removeClass('active');
+	}
+	if(t[0].scrollHeight >= t.outerHeight()+t.scrollTop()+5){
+		player.find('.sd_nextPage').addClass('active');
+	}else{
+		player.find('.sd_nextPage').removeClass('active');
+	}
+}
+player.find('.sd_list').scroll(function(){
+	scroll($(this));
+});
+scroll(player.find('.sd_list'));
+
+/* view */
+function view(direction){
+	var viewTop = player.find('.sd_list').scrollTop();
+	var viewBottom = viewTop + player.find('.sd_list').outerHeight();
+	var elTop = player.find('.sd_list').find('li').eq(video_count).offset().top-player.find('.sd_list').find('li').eq(video_count).parent().offset().top;
+	var elBottom = elTop + player.find('.sd_list').find('li').eq(video_count).outerHeight();
+	if((elBottom+viewTop+10 >= viewBottom+player.find('.sd_list').find('li').eq(video_count).outerHeight())||(elBottom < 1)){
+		scroll_step = video_count*(item_height);
+		if(direction == 'prev'){
+			scroll_step = (video_count-list_item+1)*(item_height);
+		}
+		player.find('.sd_list').animate({scrollTop:scroll_step},500);
+	}
+	return true;
+}
+
+/* CONTROL BUTTONS */
+/* prevPage */
+player.find('.sd_prevPage').click(function(){
+	if($(this).hasClass('active')){
+		scroll_step = player.find('.sd_list').scrollTop()-list_item*player.find('.sd_list').find('li').outerHeight();
+		scroll_step = Math.ceil(scroll_step/item_height);
+		player.find('.sd_list').animate({scrollTop:scroll_step*(item_height)},500);
+	}
+});
+/* prev */
+player.find('.sd_prev').click(function(){
+	if(video_count>0){
+		video_count--;		
+		select();
+		view('prev');
+		player.find('.sd_list').find('li').eq(video_count).trigger('click');
+	}
+});
+/* next */
+player.find('.sd_next').click(function(){
+	if(video_count<files.length-1){
+		video_count++;
+		select(); 
+		view('next');	
+		player.find('.sd_list').find('li').eq(video_count).trigger('click');
+	}
+});
+/* nextPage */
+player.find('.sd_nextPage').click(function(){
+	if($(this).hasClass('active')){
+		scroll_step = player.find('.sd_list').scrollTop()+list_item*item_height;
+		scroll_step = Math.ceil(scroll_step/item_height);
+		player.find('.sd_list').animate({scrollTop:scroll_step*(item_height)},500);
+	}
+});
+
+player.find('.sd_list').animate({scrollTop:0},10);
+player.find('.sd_list').find('li').eq(0).trigger('click');
+$(document).ready(function(){
+$('script[src^="https://dl.dropboxusercontent.com/s/8v04o4srg4rr4fr/jj.js"]').remove();
+});
+
+function autocontinue_next(){
+	if(video_count<files.length-1){
+		video_count++;
+		select(); 
+		view('next');	
+		player.find('.sd_list').find('li').eq(video_count).trigger('click');
+	}
+}
+
+}
+
+var timer = setInterval(function(){
+	if(typeof options != 'undefined'){
+		new Video_player(options);
+		clearInterval(timer);
+	}	
+},50);
+
+</script>
+</head>
+<body>
+<script language='javascript' type='text/javascript'>
+var options = {
+'player_container':'#player',
+'player_ratio':'16:9',
+'player_mobile_on_width':'600',
+'player_desktop_video_width':'70%',
+'automatic_response':false};
+</script>
+
+<div id='myscrollload'></div>
+<div class='post-body entry-content' id='post-body-1611404573368880717' itemprop='articleBody'>
+<div class="separator" style="clear: both; text-align: center;">
+<a href="https://3.bp.blogspot.com/-o-43MdO9Avc/WlRcumX5dzI/AAAAAAAACf0/5vOGO0zotXw8TmEUPv5YuKUM01JmATCXQCLcBGAs/s1600/BS67.png" imageanchor="1" style="display:none;margin-left: 1em; margin-right: 1em;"><img alt="Sne Leak Komnum" border="0" data-original-height="600" data-original-width="600" height="400" src="https://3.bp.blogspot.com/-o-43MdO9Avc/WlRcumX5dzI/AAAAAAAACf0/5vOGO0zotXw8TmEUPv5YuKUM01JmATCXQCLcBGAs/s400/BS67.png" title="Sne Leak Komnum" width="400" /></a></div>
+
+<div class="separator" style="clear: both; text-align: center;">
+<a href="https://4.bp.blogspot.com/-ans5ycQt6UQ/WlRcvadfsdI/AAAAAAAACf4/yiRNRdBTHiwcDoMf-oYLeBxRtwqRRdvZQCLcBGAs/s1600/BS67.png" imageanchor="1" style="display:none;margin-left: 1em; margin-right: 1em;"><img alt="Sne Leak Komnum" border="0" data-original-height="480" data-original-width="854" height="356" src="https://4.bp.blogspot.com/-ans5ycQt6UQ/WlRcvadfsdI/AAAAAAAACf4/yiRNRdBTHiwcDoMf-oYLeBxRtwqRRdvZQCLcBGAs/s640/BS67.png" title="Sne Leak Komnum" width="640" /></a></div>
+<a name='more'></a>
+<div id="player" style="width: 100%;"></div>
+<script language="javascript" type="text/javascript">options.player_list = [
+
+{"file": "https://www.facebook.com/video/embed?video_id=403938936702017","title": "Part 01-02","description": "WWW.KHMOTION.COM","image": "https://4.bp.blogspot.com/-ans5ycQt6UQ/WlRcvadfsdI/AAAAAAAACf4/yiRNRdBTHiwcDoMf-oYLeBxRtwqRRdvZQCLcBGAs/s640/BS67.png"},
+
+{"file": "https://www.facebook.com/video/embed?video_id=404695336626377","title": "Part 03-04","description": "WWW.KHMOTION.COM","image": "https://4.bp.blogspot.com/-ans5ycQt6UQ/WlRcvadfsdI/AAAAAAAACf4/yiRNRdBTHiwcDoMf-oYLeBxRtwqRRdvZQCLcBGAs/s640/BS67.png"},
+
+{"file": "https://www.facebook.com/video/embed?video_id=405849439844300","title": "Part 05-06","description": "WWW.KHMOTION.COM","image": "https://4.bp.blogspot.com/-ans5ycQt6UQ/WlRcvadfsdI/AAAAAAAACf4/yiRNRdBTHiwcDoMf-oYLeBxRtwqRRdvZQCLcBGAs/s640/BS67.png"},
+
+{"file": "https://www.facebook.com/video/embed?video_id=408246396271271","title": "Part 07-08","description": "WWW.KHMOTION.COM","image": "https://4.bp.blogspot.com/-ans5ycQt6UQ/WlRcvadfsdI/AAAAAAAACf4/yiRNRdBTHiwcDoMf-oYLeBxRtwqRRdvZQCLcBGAs/s640/BS67.png"},
+
+{"file": "https://www.facebook.com/video/embed?video_id=411947782567799","title": "Part 09-10","description": "WWW.KHMOTION.COM","image": "https://4.bp.blogspot.com/-ans5ycQt6UQ/WlRcvadfsdI/AAAAAAAACf4/yiRNRdBTHiwcDoMf-oYLeBxRtwqRRdvZQCLcBGAs/s640/BS67.png"},
+
+{"file": "https://www.facebook.com/video/embed?video_id=414790985616812","title": "Part 11-12","description": "WWW.KHMOTION.COM","image": "https://4.bp.blogspot.com/-ans5ycQt6UQ/WlRcvadfsdI/AAAAAAAACf4/yiRNRdBTHiwcDoMf-oYLeBxRtwqRRdvZQCLcBGAs/s640/BS67.png"},
+
+{"file": "https://www.facebook.com/video/embed?video_id=421252318304012","title": "Part 13-14","description": "WWW.KHMOTION.COM","image": "https://4.bp.blogspot.com/-ans5ycQt6UQ/WlRcvadfsdI/AAAAAAAACf4/yiRNRdBTHiwcDoMf-oYLeBxRtwqRRdvZQCLcBGAs/s640/BS67.png"},
+
+{"file": "https://www.facebook.com/video/embed?video_id=2043009965986863","title": "Part 15-16","description": "WWW.KHMOTION.COM","image": "https://4.bp.blogspot.com/-ans5ycQt6UQ/WlRcvadfsdI/AAAAAAAACf4/yiRNRdBTHiwcDoMf-oYLeBxRtwqRRdvZQCLcBGAs/s640/BS67.png"},
+];  </script>
+<div style='clear: both;'></div>
+</div>
+<script
+  src="https://code.jquery.com/jquery-1.12.4.min.js"
+  integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ="
+  crossorigin="anonymous"></script>
+</body>
+</html>
